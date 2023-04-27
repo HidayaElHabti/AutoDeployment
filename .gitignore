@@ -1,8 +1,8 @@
-INFRA/Terraform/id_rsa
-INFRA/Terraform/main.tfplan
-INFRA/Terraform/.terraform
-INFRA/Terraform/.terraform.lock.hcl
-INFRA/Terraform/terraform.tfstate
-commands
-main.destroy.tfplan
-terraform.tfstate.backup
+INFRA/Terraform/vm_nexus/id_rsa
+INFRA/Terraform/vm_nexus/main.tfplan
+INFRA/Terraform/vm_nexus/.terraform
+INFRA/Terraform/vm_nexus/.terraform.lock.hcl
+INFRA/Terraform/vm_nexus/terraform.tfstate
+INFRA/Terraform/vm_nexus/commands
+INFRA/Terraform/vm_nexus/main.destroy.tfplan
+INFRA/Terraform/vm_nexus/terraform.tfstate.backup
