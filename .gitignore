@@ -3,3 +3,6 @@ INFRA/Terraform/main.tfplan
 INFRA/Terraform/.terraform
 INFRA/Terraform/.terraform.lock.hcl
 INFRA/Terraform/terraform.tfstate
+commands
+main.destroy.tfplan
+terraform.tfstate.backup
