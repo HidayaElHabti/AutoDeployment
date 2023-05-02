@@ -1,0 +1,75 @@
+---
+- name: Install and configure Nexus
+  become: true
+  hosts: azure
+  connection: local
+
+  tasks:
+    - name: Update apt cache
+      apt: update_cache=yes
+
+    - name: Install OpenJDK 8
+      apt:
+        name: openjdk-8-jdk
+        state: present
+
+    - name: Download and extract Nexus
+      shell: cd /opt && wget http://download.sonatype.com/nexus/3/nexus-3.22.0-02-unix.tar.gz && tar -xvf nexus-3.22.0-02-unix.tar.gz && mv nexus-3.22.0-02 nexus
+
+    - name: Create nexus user
+      user:
+        name: nexus
+        state: present
+
+    - name: Set permissions for Nexus directory
+      file:
+        path: /opt/nexus
+        state: directory
+        owner: nexus
+        group: nexus
+        recurse: yes
+
+    - name: Set permissions for sonatype-work directory
+      file:
+        path: /opt/sonatype-work
+        state: directory
+        owner: nexus
+        group: nexus
+        recurse: yes
+
+    - name: Update run_as_user setting in nexus.rc file
+      lineinfile:
+        path: /opt/nexus/bin/nexus.rc
+        regexp: '^run_as_user='
+        line: 'run_as_user="nexus"'
+
+    - name: Create systemd unit file for Nexus
+      copy:
+        dest: /etc/systemd/system/nexus.service
+        content: |
+          [Unit]
+          Description=nexus service
+          After=network.target
+          
+          [Service]
+          Type=forking
+          LimitNOFILE=65536
+          User=nexus
+          Group=nexus
+          ExecStart=/opt/nexus/bin/nexus start
+          ExecStop=/opt/nexus/bin/nexus stop
+          Restart=on-abort
+          
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable Nexus service
+      systemd:
+        name: nexus
+        enabled: yes
+
+    - name: Start Nexus service
+      systemd:
+        name: nexus
+        state: started
+
