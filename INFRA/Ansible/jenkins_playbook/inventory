@@ -1,0 +1,2 @@
+[jenkins_server]
+ipAddr ansible_user=druid
