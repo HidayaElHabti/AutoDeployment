@@ -1,0 +1,7 @@
+.terraform.lock.hcl
+.terraform/
+commands
+main.destroy.tfplan
+terraform.tfstate
+terraform.tfstate.backup
+main.tfplan
