@@ -1,10 +1,6 @@
-resource "random_pet" "rg_name" {
-  prefix = var.resource_group_name_prefix
-}
-
 resource "azurerm_resource_group" "rg" {
   location = var.resource_group_location
-  name     = random_pet.rg_name.id
+  name     = "myRG"
 }
 
 # Create virtual network
@@ -25,7 +21,8 @@ resource "azurerm_subnet" "my_terraform_subnet" {
 
 # Create public IPs
 resource "azurerm_public_ip" "my_terraform_public_ip" {
-  name                = "myPublicIP"
+  for_each            = var.servers
+  name                = "${each.value}PublicIP"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
@@ -33,7 +30,8 @@ resource "azurerm_public_ip" "my_terraform_public_ip" {
 
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "my_terraform_nsg" {
-  name                = "myNetworkSecurityGroup"
+  for_each            = var.servers
+  name                = "${each.value}NetworkSecurityGroup"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -50,13 +48,13 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
   }
   
   security_rule {
-    name                       = "nexus"
+    name                       = each.value
     priority                   = 1002
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "8081"
+    destination_port_range     = lookup(var.dest_port, each.value)
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -64,26 +62,29 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
 
 # Create network interface
 resource "azurerm_network_interface" "my_terraform_nic" {
-  name                = "myNIC"
+  for_each            = var.servers
+  name                = "${each.value}NIC"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
-    name                          = "my_nic_configuration"
+    name                          = "${each.value}_nic_configuration"
     subnet_id                     = azurerm_subnet.my_terraform_subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.my_terraform_public_ip.id
+    public_ip_address_id          = azurerm_public_ip.my_terraform_public_ip[each.key].id
   }
 }
 
 # Connect the security group to the network interface
 resource "azurerm_network_interface_security_group_association" "example" {
-  network_interface_id      = azurerm_network_interface.my_terraform_nic.id
-  network_security_group_id = azurerm_network_security_group.my_terraform_nsg.id
+  for_each                  = var.servers
+  network_interface_id      = azurerm_network_interface.my_terraform_nic[each.key].id
+  network_security_group_id = azurerm_network_security_group.my_terraform_nsg[each.key].id
 }
 
 # Generate random text for a unique storage account name
 resource "random_id" "random_id" {
+  for_each = var.servers
   keepers = {
     # Generate a new ID only when a new resource group is defined
     resource_group = azurerm_resource_group.rg.name
@@ -94,7 +95,8 @@ resource "random_id" "random_id" {
 
 # Create storage account for boot diagnostics
 resource "azurerm_storage_account" "my_storage_account" {
-  name                     = "diag${random_id.random_id.hex}"
+  for_each                 = var.servers
+  name                     = "diag${random_id.random_id[each.key].hex}"
   location                 = azurerm_resource_group.rg.location
   resource_group_name      = azurerm_resource_group.rg.name
   account_tier             = "Standard"
@@ -109,14 +111,15 @@ resource "tls_private_key" "example_ssh" {
 
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
-  name                  = "vmNexus"
+  for_each              = var.servers
+  name                  = "${each.value}VM"
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
-  network_interface_ids = [azurerm_network_interface.my_terraform_nic.id]
+  network_interface_ids = [azurerm_network_interface.my_terraform_nic[each.key].id]
   size                  = "Standard_DS1_v2"
 
   os_disk {
-    name                 = "myOsDisk"
+    name                 = "${each.value}OsDisk"
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
   }
@@ -128,7 +131,7 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
     version   = "latest"
   }
 
-  computer_name                   = "vmNexus"
+  computer_name                   = "${each.value}VM"
   admin_username                  = "azureuser"
   disable_password_authentication = true
 
@@ -138,6 +141,6 @@ resource "azurerm_linux_virtual_machine" "my_terraform_vm" {
   }
 
   boot_diagnostics {
-    storage_account_uri = azurerm_storage_account.my_storage_account.primary_blob_endpoint
+    storage_account_uri = azurerm_storage_account.my_storage_account[each.key].primary_blob_endpoint
   }
 }
