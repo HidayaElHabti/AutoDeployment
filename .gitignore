@@ -5,3 +5,4 @@ main.destroy.tfplan
 terraform.tfstate
 terraform.tfstate.backup
 main.tfplan
+id_rsa
