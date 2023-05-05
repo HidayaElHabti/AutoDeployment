@@ -1,0 +1,10 @@
+---
+
+- name: Simple test playbook
+  hosts: nexus_server
+  become: true
+  tasks:
+
+  - name: Print mssg
+    debug:
+        msg: "Hello World!"
