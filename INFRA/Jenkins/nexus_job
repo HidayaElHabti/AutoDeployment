@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+    stages {
+        stage('Clone repository') {
+            steps {
+                git branch: 'infra', url: 'https://github.com/HidayaElHabti/AutoDeployment.git'
+            }
+        }
+        stage('Run playbook') {
+            environment {
+                ANSIBLE_HOST_KEY_CHECKING = 'False'
+            }
+            steps {
+                sh 'ls -l /var/lib/jenkins/workspace'
+                ansiblePlaybook become: true, credentialsId: 'id_rsa', disableHostKeyChecking: true, installation: 'ansible', inventory: 'INFRA/Ansible/nexus_playbook/inventory', playbook: 'INFRA/Ansible/nexus_playbook/nexus.yaml'
+            }
+        }
+    }
+}

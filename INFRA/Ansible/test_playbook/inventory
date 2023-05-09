@@ -1,0 +1,2 @@
+[nexus_server]
+4.221.37.199 ansible_user=azureuser
