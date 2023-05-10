@@ -1,2 +1,2 @@
 [azure]
-<your_ip_address> ansible_connection=ssh ansible_user=azureuser ansible_ssh_private_key_file=~/.ssh/azure_key.pem
+4.221.37.206 ansible_connection=ssh ansible_user=azureuser
