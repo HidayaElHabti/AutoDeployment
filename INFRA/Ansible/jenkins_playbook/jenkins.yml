@@ -1,7 +1,7 @@
 ---
 
 - name: Install and Configure Jenkins
-  hosts: jenkins_server
+  hosts: azure
   become: true
   tasks:
 
